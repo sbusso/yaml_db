@@ -5,14 +5,14 @@ describe SerializationHelper::Dump do
 	before do
 		silence_warnings { ActiveRecord::Base = mock('ActiveRecord::Base', :null_object => true) }
 		ActiveRecord::Base.stub(:connection).and_return(stub('connection').as_null_object)
-		ActiveRecord::Base.connection.stub!(:tables).and_return([ 'mytable', 'schema_info', 'schema_migrations' ])
+		ActiveRecord::Base.connection.stub!(:tables).and_return([ 'mytable', 'mytable2', 'schema_info', 'schema_migrations' ])
 		ActiveRecord::Base.connection.stub!(:columns).with('mytable').and_return([ mock('a', :name => 'a', :type => :string), mock('b', :name => 'b', :type => :string) ])
 		ActiveRecord::Base.connection.stub!(:select_one).and_return({"count"=>"2"})
 		ActiveRecord::Base.connection.stub!(:select_all).and_return([ { 'a' => 1, 'b' => 2 }, { 'a' => 3, 'b' => 4 } ])
 		SerializationHelper::Utils.stub!(:quote_table).with('mytable').and_return('mytable')
 	end
 
-	before(:each) do   
+	before(:each) do
 	  File.stub!(:new).with('dump.yml', 'w').and_return(StringIO.new)
 	  @io = StringIO.new
 	end
@@ -22,7 +22,11 @@ describe SerializationHelper::Dump do
 	end
 
 	it "should return a list of tables without the rails schema table" do
-		SerializationHelper::Dump.tables.should == ['mytable']
+		SerializationHelper::Dump.tables.should == ['mytable', 'mytable2']
+	end
+
+	it "should return only specified tables if a list is given" do
+		SerializationHelper::Dump.tables(['mytable2']).should == ['mytable2']
 	end
 
 	it "should return the total number of records in a table" do

@@ -148,7 +148,7 @@ module SerializationHelper
     end
 
     def self.dump(io, table_list = nil)
-      (table_list ? table_list : tables).each do |table|
+      tables(table_list).each do |table|
         before_table(io, table)
         dump_table(io, table)
         after_table(io, table)
@@ -159,8 +159,8 @@ module SerializationHelper
 
     end
 
-    def self.tables
-      ActiveRecord::Base.connection.tables.reject { |table| ['schema_info', 'schema_migrations'].include?(table) }
+    def self.tables(table_list = nil)
+      table_list ? table_list : ActiveRecord::Base.connection.tables.reject { |table| ['schema_info', 'schema_migrations'].include?(table) }
     end
 
     def self.dump_table(io, table)
