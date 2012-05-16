@@ -3,15 +3,17 @@ module SerializationHelper
   class Base
     attr_reader :extension
 
-    def initialize(helper)
+
+    def initialize(helper, tables = nil)
       @dumper = helper.dumper
       @loader = helper.loader
       @extension = helper.extension
+      @tables = tables
     end
 
     def dump(filename)
       disable_logger
-      @dumper.dump(File.new(filename, "w"))
+      @dumper.dump(File.new(filename, "w"), @tables)
       reenable_logger
     end
 
@@ -22,7 +24,7 @@ module SerializationHelper
         io = File.new "#{dirname}/#{table}.#{@extension}", "w"
         @dumper.before_table(io, table)
         @dumper.dump_table io, table
-        @dumper.after_table(io, table)         
+        @dumper.after_table(io, table)
       end
     end
 
@@ -38,7 +40,7 @@ module SerializationHelper
           next
         end
         @loader.load(File.new("#{dirname}/#{filename}", "r"), truncate)
-      end   
+      end
     end
 
     def disable_logger
@@ -50,7 +52,7 @@ module SerializationHelper
       ActiveRecord::Base.logger = @@old_logger
     end
   end
-  
+
   class Load
     def self.load(io, truncate = true)
       ActiveRecord::Base.connection.transaction do
@@ -92,9 +94,9 @@ module SerializationHelper
       if ActiveRecord::Base.connection.respond_to?(:reset_pk_sequence!)
         ActiveRecord::Base.connection.reset_pk_sequence!(table_name)
       end
-    end    
+    end
 
-      
+
   end
 
   module Utils
@@ -145,8 +147,8 @@ module SerializationHelper
 
     end
 
-    def self.dump(io)
-      tables.each do |table|
+    def self.dump(io, table_list = nil)
+      (table_list ? table_list : tables).each do |table|
         before_table(io, table)
         dump_table(io, table)
         after_table(io, table)
